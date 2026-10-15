@@ -40,11 +40,12 @@ final class SidebarHelpMenuUITests: XCTestCase {
             description: "sidebar help button"
         )
         helpButton.click()
+        XCTAssertEqual(app.popovers.count, 0, "The sidebar Help control must open a native menu.")
 
         let checkForUpdatesItem = requireElement(
             candidates: helpMenuItemCandidates(in: app, identifier: "SidebarHelpMenuOptionCheckForUpdates", title: "Check for Updates"),
             timeout: 3.0,
-            description: "Check for Updates help menu item"
+            description: "Check for Updates native menu item"
         )
         checkForUpdatesItem.click()
 
@@ -70,7 +71,7 @@ final class SidebarHelpMenuUITests: XCTestCase {
         let sendFeedbackItem = requireElement(
             candidates: helpMenuItemCandidates(in: app, identifier: "SidebarHelpMenuOptionSendFeedback", title: "Send Feedback"),
             timeout: 3.0,
-            description: "Send Feedback help menu item"
+            description: "Send Feedback native menu item"
         )
         sendFeedbackItem.click()
 
@@ -173,10 +174,12 @@ final class SidebarHelpMenuUITests: XCTestCase {
         )
         XCTAssertTrue(
             sidebarHelpPollUntil(timeout: 2.0) {
-                !app.buttons["SidebarHelpMenuOptionSettings"].exists
+                !app.menuItems["SidebarHelpMenuOptionSettings"].exists
+                    && !app.menuItems["Settings…"].exists
+                    && !app.buttons["SidebarHelpMenuOptionSettings"].exists
                     && !app.buttons["Settings…"].exists
             },
-            "Expected the Help popover to dismiss after opening Settings"
+            "Expected the Help menu to dismiss after opening Settings"
         )
         XCTAssertEqual(app.windows.count, 2, "Expected one main window and one Settings window")
 
@@ -230,9 +233,13 @@ final class SidebarHelpMenuUITests: XCTestCase {
     private func helpButtonCandidates(in app: XCUIApplication) -> [XCUIElement] {
         let sidebar = app.otherElements["Sidebar"]
         return [
+            app.menuButtons["SidebarHelpMenuButton"],
             app.buttons["SidebarHelpMenuButton"],
+            app.menuButtons["Help"],
             app.buttons["Help"],
+            sidebar.menuButtons["SidebarHelpMenuButton"],
             sidebar.buttons["SidebarHelpMenuButton"],
+            sidebar.menuButtons["Help"],
             sidebar.buttons["Help"],
             app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Help")).firstMatch,
         ]
@@ -244,6 +251,8 @@ final class SidebarHelpMenuUITests: XCTestCase {
         title: String
     ) -> [XCUIElement] {
         [
+            app.menuItems[identifier],
+            app.menuItems[title],
             app.buttons[identifier],
             app.buttons[title],
         ]
@@ -358,7 +367,9 @@ final class FeedbackComposerShortcutUITests: XCTestCase {
 
         XCTAssertTrue(
             sidebarHelpPollUntil(timeout: 3.0) {
-                !app.buttons["SidebarHelpMenuButton"].exists && !app.buttons["Help"].exists
+                !app.menuButtons["SidebarHelpMenuButton"].exists
+                    && !app.buttons["SidebarHelpMenuButton"].exists
+                    && !app.buttons["Help"].exists
             }
         )
 

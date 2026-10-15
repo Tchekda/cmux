@@ -41,21 +41,22 @@ final class CloudTeamPickerPlacementUITests: XCTestCase {
         super.tearDown()
     }
 
-    func testAccountFooterDoesNotOfferTeamPickerAndCloudHeaderDoes() {
+    func testAccountFooterUsesNativeMenuAndCloudHeaderOffersTeamPicker() {
         let app = launchSignedInApp()
         defer { app.terminate() }
-        let accountButton = app.buttons.matching(NSPredicate(
+        let accountButton = app.menuButtons.matching(NSPredicate(
             format: "identifier == %@ OR label == %@", "SidebarAccountMenuButton", "Account"
         )).firstMatch
         XCTAssertTrue(accountButton.waitForExistence(timeout: 10))
         accountButton.click()
-        XCTAssertTrue(app.buttons["SidebarAccountSignOutButton"].waitForExistence(timeout: 5))
-        capture("account-popover")
+        XCTAssertEqual(app.popovers.count, 0, "The account control must open a native menu.")
+        XCTAssertTrue(app.menuItems["SidebarAccountSignOutButton"].waitForExistence(timeout: 5))
+        capture("account-menu")
         XCTAssertFalse(
-            app.buttons["SidebarAccountTeamPickerButton"].waitForExistence(timeout: 2),
-            "The local account popover must not offer team switching."
+            app.menuItems["SidebarAccountTeamPickerButton"].waitForExistence(timeout: 2),
+            "The local account menu must not offer team switching."
         )
-        XCTAssertFalse(app.buttons["SidebarAccountCreateTeamButton"].exists)
+        XCTAssertFalse(app.menuItems["SidebarAccountCreateTeamButton"].exists)
 
         let cloudMode = app.buttons["RightSidebarModeButton.machines"]
         XCTAssertTrue(cloudMode.waitForExistence(timeout: 10))
@@ -73,7 +74,7 @@ final class CloudTeamPickerPlacementUITests: XCTestCase {
         app.typeKey("t", modifierFlags: [.command, .option, .shift])
         let create = createTeamItem(app)
         assertDropdownAnchoredUnderTrigger(app)
-        XCTAssertFalse(app.buttons["SidebarAccountSignOutButton"].exists)
+        XCTAssertFalse(app.menuItems["SidebarAccountSignOutButton"].exists)
         capture("shortcut-opens-cloud-picker")
 
         create.click()
