@@ -15835,12 +15835,9 @@ private struct SidebarHelpMenuButton: View {
     @AppStorage(SidebarFooterHelpIconDebugSettings.weightKey)
     private var debugIconWeight = SidebarFooterHelpIconDebugSettings.defaultWeight.rawValue
 #endif
-    @State private var keyboardShortcutSettingsObserver = KeyboardShortcutSettingsObserver.shared
     @Environment(BrowserDataImportCoordinator.self) private var browserDataImportCoordinator: BrowserDataImportCoordinator?
 
     let onSendFeedback: () -> Void
-
-    @State private var isPopoverPresented = false
 
     private var iconSize: CGFloat {
 #if DEBUG
@@ -15859,178 +15856,133 @@ private struct SidebarHelpMenuButton: View {
 #endif
     }
 
-    private var settingsShortcutHint: String {
-        let _ = keyboardShortcutSettingsObserver.revision
-        return KeyboardShortcutSettings.shortcut(for: .openSettings).displayString
-    }
-
-    private var sendFeedbackShortcutHint: String {
-        let _ = keyboardShortcutSettingsObserver.revision
-        return KeyboardShortcutSettings.shortcut(for: .sendFeedback).displayString
-    }
-
     var body: some View {
-        Button {
-            isPopoverPresented.toggle()
+        Menu {
+            helpMenu
         } label: {
             SidebarFooterHelpIcon(pointSize: iconSize, weight: iconWeight)
                 .frame(width: buttonSize, height: buttonSize, alignment: .center)
         }
-        .buttonStyle(SidebarFooterIconButtonStyle())
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
         .frame(width: buttonSize, height: buttonSize, alignment: .center)
-        .background(ArrowlessPopoverAnchor(
-            isPresented: $isPopoverPresented,
-            preferredEdge: .maxY,
-            detachedGap: 4
-        ) {
-            helpPopover
-        })
         .accessibilityElement(children: .ignore)
         .safeHelp(helpTitle)
         .hintableAccessibilityLabel(helpTitle)
         .accessibilityIdentifier("SidebarHelpMenuButton")
     }
 
-    private var helpPopover: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            helpOptionButton(
+    @ViewBuilder
+    private var helpMenu: some View {
+        helpOptionButton(
                 title: String(localized: "sidebar.help.welcome", defaultValue: "Welcome to cmux!"),
                 action: .welcome,
                 accessibilityIdentifier: "SidebarHelpMenuOptionWelcome",
-                isExternalLink: false
-            )
-            if let offer = ProUpgradePresenter.currentUpgradeOffer {
-                helpOptionButton(
+                systemImage: "hand.wave"
+        )
+        if let offer = ProUpgradePresenter.currentUpgradeOffer {
+            helpOptionButton(
                     title: ProUpgradePresenter.upgradeMenuTitle(for: offer),
                     action: .upgrade,
                     accessibilityIdentifier: "SidebarHelpMenuOptionUpgrade",
-                    isExternalLink: false,
-                    trailingSystemImage: "sparkles"
-                )
-            }
-            helpOptionButton(
+                    systemImage: "sparkles"
+            )
+        }
+        helpOptionButton(
                 title: String(localized: "menu.app.settings", defaultValue: "Settings…"),
                 action: .settings,
                 accessibilityIdentifier: "SidebarHelpMenuOptionSettings",
-                isExternalLink: false,
-                shortcutHint: settingsShortcutHint
-            )
-            helpOptionButton(
+                systemImage: "gearshape",
+                shortcut: KeyboardShortcutSettings.shortcut(for: .openSettings)
+        )
+        helpOptionButton(
                 title: String(localized: "settings.section.keyboardShortcuts", defaultValue: "Keyboard Shortcuts"),
                 action: .keyboardShortcuts,
                 accessibilityIdentifier: "SidebarHelpMenuOptionKeyboardShortcuts",
-                isExternalLink: false
-            )
-            helpOptionButton(
+                systemImage: "keyboard"
+        )
+        helpOptionButton(
                 title: String(localized: "menu.view.importFromBrowser", defaultValue: "Import Browser Data…"),
                 action: .importBrowserData,
                 accessibilityIdentifier: "SidebarHelpMenuOptionImportBrowserData",
-                isExternalLink: false
-            )
-            helpOptionButton(
+                systemImage: "square.and.arrow.down"
+        )
+        helpOptionButton(
                 title: String(localized: "sidebar.help.sendFeedback", defaultValue: "Send Feedback"),
                 action: .sendFeedback,
                 accessibilityIdentifier: "SidebarHelpMenuOptionSendFeedback",
-                isExternalLink: false,
-                shortcutHint: sendFeedbackShortcutHint,
-                trailingSystemImage: "bubble.left.and.text.bubble.right"
-            )
-            if docsURL != nil {
-                helpOptionButton(
+                systemImage: "bubble.left.and.text.bubble.right",
+                shortcut: KeyboardShortcutSettings.shortcut(for: .sendFeedback)
+        )
+        if docsURL != nil {
+            helpOptionButton(
                     title: String(localized: "about.docs", defaultValue: "Docs"),
                     action: .docs,
                     accessibilityIdentifier: "SidebarHelpMenuOptionDocs",
-                    isExternalLink: true
-                )
-            }
-            if changelogURL != nil {
-                helpOptionButton(
+                    systemImage: "arrow.up.right"
+            )
+        }
+        if changelogURL != nil {
+            helpOptionButton(
                     title: String(localized: "sidebar.help.changelog", defaultValue: "Changelog"),
                     action: .changelog,
                     accessibilityIdentifier: "SidebarHelpMenuOptionChangelog",
-                    isExternalLink: true
-                )
-            }
-            if githubURL != nil {
-                helpOptionButton(
+                    systemImage: "arrow.up.right"
+            )
+        }
+        if githubURL != nil {
+            helpOptionButton(
                     title: String(localized: "about.github", defaultValue: "GitHub"),
                     action: .github,
                     accessibilityIdentifier: "SidebarHelpMenuOptionGitHub",
-                    isExternalLink: true
-                )
-            }
-            if githubIssuesURL != nil {
-                helpOptionButton(
+                    systemImage: "arrow.up.right"
+            )
+        }
+        if githubIssuesURL != nil {
+            helpOptionButton(
                     title: String(localized: "sidebar.help.githubIssues", defaultValue: "GitHub Issues"),
                     action: .githubIssues,
                     accessibilityIdentifier: "SidebarHelpMenuOptionGitHubIssues",
-                    isExternalLink: true
-                )
-            }
-            if discordURL != nil {
-                helpOptionButton(
+                    systemImage: "arrow.up.right"
+            )
+        }
+        if discordURL != nil {
+            helpOptionButton(
                     title: String(localized: "sidebar.help.discord", defaultValue: "Discord"),
                     action: .discord,
                     accessibilityIdentifier: "SidebarHelpMenuOptionDiscord",
-                    isExternalLink: true
-                )
-            }
-            helpOptionButton(
+                    systemImage: "arrow.up.right"
+            )
+        }
+        helpOptionButton(
                 title: String(localized: "command.checkForUpdates.title", defaultValue: "Check for Updates"),
                 action: .checkForUpdates,
                 accessibilityIdentifier: "SidebarHelpMenuOptionCheckForUpdates",
-                isExternalLink: false
-            )
-        }
-        .padding(8)
-        .frame(minWidth: 200)
+                systemImage: "arrow.clockwise"
+        )
     }
 
+    @ViewBuilder
     private func helpOptionButton(
         title: String,
         action: SidebarHelpMenuAction,
         accessibilityIdentifier: String,
-        isExternalLink: Bool,
-        shortcutHint: String? = nil,
-        trailingSystemImage: String? = nil
+        systemImage: String,
+        shortcut: StoredShortcut? = nil
     ) -> some View {
-        Button {
-            isPopoverPresented = false
+        let button = Button {
             perform(action)
         } label: {
-            HStack(spacing: 8) {
-                Text(title)
-                    .cmuxFont(size: 12)
-                Spacer(minLength: 0)
-                if let shortcutHint {
-                    helpOptionShortcutHint(text: shortcutHint)
-                }
-                if let trailingSystemImage {
-                    helpOptionTrailingIcon(systemName: trailingSystemImage)
-                }
-                if isExternalLink {
-                    helpOptionTrailingIcon(systemName: "arrow.up.right", size: 8)
-                }
-            }
-            .padding(.horizontal, 8)
-            .frame(height: 24)
-            .contentShape(Rectangle())
+            Label(title, systemImage: systemImage)
         }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier(accessibilityIdentifier)
-    }
-
-    private func helpOptionShortcutHint(text: String) -> some View {
-        Text(text)
-            .lineLimit(1)
-            .fixedSize(horizontal: true, vertical: false)
-            .cmuxFont(size: 10, weight: .regular, design: .rounded)
-            .monospacedDigit()
-            .foregroundStyle(Color(nsColor: .secondaryLabelColor))
-    }
-
-    private func helpOptionTrailingIcon(systemName: String, size: CGFloat = 13) -> some View {
-        CmuxSystemSymbolImage(systemName: systemName, pointSize: size, tint: Color(nsColor: .secondaryLabelColor))
+        if let shortcut, let key = shortcut.keyEquivalent {
+            button
+                .keyboardShortcut(key, modifiers: shortcut.eventModifiers)
+                .accessibilityIdentifier(accessibilityIdentifier)
+        } else {
+            button
+                .accessibilityIdentifier(accessibilityIdentifier)
+        }
     }
 
     private func perform(_ action: SidebarHelpMenuAction) {
@@ -16046,12 +15998,10 @@ private struct SidebarHelpMenuButton: View {
         case .upgrade:
             ProUpgradePresenter.present(source: .sidebarHelpMenu)
         case .importBrowserData:
-            isPopoverPresented = false
             DispatchQueue.main.async {
                 browserDataImportCoordinator?.presentImportDialog()
             }
         case .keyboardShortcuts:
-            isPopoverPresented = false
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
                 Task { @MainActor in
                     if let appDelegate = AppDelegate.shared {
@@ -16084,10 +16034,8 @@ private struct SidebarHelpMenuButton: View {
                 AppDelegate.shared?.checkForUpdates(nil)
             }
         case .sendFeedback:
-            isPopoverPresented = false
             onSendFeedback()
         case .welcome:
-            isPopoverPresented = false
             Task { @MainActor in
                 if let appDelegate = AppDelegate.shared {
                     appDelegate.openWelcomeWorkspace()
