@@ -35,7 +35,12 @@ The local runner reuses one browser per engine but recycles it when a renderer t
 
 ## Per-PR diff
 
-`.github/workflows/gallery-pr.yml` runs on each PR to feat-cmux-next that touches the webviews. `webviews/scripts/gallery/touched.ts` picks the entries the change reaches: an entry's own file, anything its `covers` import, and every entry of a host whose stylesheet changed. A gallery or build-config change picks every entry. The job renders those entries x variants x both default themes x both compact and normal pane widths x both engines on Linux at the merge-base and at the head, and at the head a second time.
+The per-PR GitHub Actions gallery workflow is currently disabled. The local matrix remains
+available for an explicitly requested run: `webviews/scripts/gallery/touched.ts` picks the entries
+the change reaches (an entry's own file, anything its `covers` import, and every entry of a host
+whose stylesheet changed), then the matrix renders those entries x variants x both default themes
+x both compact and normal pane widths x both engines at the merge-base and at the head, with the
+head rendered a second time.
 
 `pr.ts` (with `compare.ts` and `report.ts`) compares each state and writes `diff/`:
 
