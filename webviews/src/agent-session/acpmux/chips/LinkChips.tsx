@@ -4,11 +4,12 @@
 // symlinks, then a user gesture; outside the folders, `agentPane.links.outsideRoots` decides and
 // the host's own sheet asks). A web chip is an ordinary link, which the host opens outside the
 // pane after a real click; its icon is the site's favicon when cmux already has one.
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { callChipHost } from "./host";
 import { FileDoc, Folder, Globe, Lock } from "../conversation/icons";
 import { usePathInfo, useSiteInfo } from "./linkStore";
 import { isDeniedPath, pathName, textLinks } from "./paths";
+import { AnchoredCard } from "../../../ui/Tooltip";
 
 /// A path chip. `label` is the link's text, else the file name; `written` is the reply's own
 /// text, which a path that gets no chip draws as.
@@ -49,11 +50,85 @@ export function UrlChip({ href, icon, children }: { href: string; icon?: ReactNo
   ) : (
     (icon ?? <Globe size={15} strokeWidth={1.1} className="cv-chip__icon" />)
   );
+  const [cardOpen, setCardOpen] = useState(false);
+  const [cardHover, setCardHover] = useState(false);
+  const anchor = useRef<HTMLAnchorElement | null>(null);
+  const openTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const clearTimers = () => {
+    if (openTimer.current !== undefined) clearTimeout(openTimer.current);
+    if (closeTimer.current !== undefined) clearTimeout(closeTimer.current);
+    openTimer.current = undefined;
+    closeTimer.current = undefined;
+  };
+  const showCard = (immediate = false) => {
+    clearTimers();
+    if (immediate) setCardOpen(true);
+    else openTimer.current = setTimeout(() => setCardOpen(true), 700);
+  };
+  const hideCard = () => {
+    clearTimers();
+    closeTimer.current = setTimeout(() => {
+      if (!cardHover) setCardOpen(false);
+    }, 180);
+  };
+  useEffect(() => () => clearTimers(), []);
+  const onPointerEnter = () => showCard();
+  const onPointerLeave = () => hideCard();
+  const onFocus = () => showCard(true);
+  const onBlur = () => hideCard();
+  const onOpen = (event: PointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    void callChipHost("browser.open", { url: href });
+  };
+  const host = (() => {
+    try {
+      return new URL(href).host;
+    } catch {
+      return href;
+    }
+  })();
   return (
-    <a className="cv-link cv-chip is-web" href={href} rel="noreferrer">
-      {mark}
-      <span className="cv-chip__label">{children}</span>
-    </a>
+    <>
+      <a
+        ref={anchor}
+        className="cv-link cv-chip is-web"
+        href={href}
+        rel="noreferrer"
+        onPointerEnter={onPointerEnter}
+        onPointerLeave={onPointerLeave}
+        onFocus={onFocus}
+        onBlur={onBlur}
+      >
+        {mark}
+        <span className="cv-chip__label">{children}</span>
+      </a>
+      <AnchoredCard anchor={cardOpen ? anchor.current : null} className="cv-link-preview">
+        <div
+          onPointerEnter={() => {
+            clearTimers();
+            setCardHover(true);
+          }}
+          onPointerLeave={() => {
+            setCardHover(false);
+            hideCard();
+          }}
+        >
+          <div className="cv-link-preview__head">
+            <span className="cv-link-preview__icon">{mark}</span>
+            <span className="cv-link-preview__site">{site?.title ?? host}</span>
+            <button type="button" className="cv-link-preview__open" onClick={onOpen}>
+              Open
+              <span aria-hidden="true">↗</span>
+            </button>
+          </div>
+          <div className="cv-link-preview__target">
+            {host} · {href}
+          </div>
+        </div>
+      </AnchoredCard>
+    </>
   );
 }
 
